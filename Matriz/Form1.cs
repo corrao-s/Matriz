@@ -89,7 +89,7 @@ namespace Matriz
                 final = new Point(actual.X+1, actual.Y);
             }
 
-            if (M[final.Y, final.X] == 0)
+            if (final.Y >= 0 && final.Y < size && final.X >= 0 && final.X < size && M[final.Y, final.X] == 0)
             {
                 M[actual.Y, actual.X] = 0;
                 M[final.Y, final.X] = 2;
