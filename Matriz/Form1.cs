@@ -14,24 +14,27 @@ namespace Matriz
     {
         private const int A = 20;
         private const int size = 5;
-        private Point actual = new Point(0, 0);
+        private Jugador[] jugadores;
         private int[,] M =
         {
-            {2,0,1,0,0 },
+            {2,0,0,0,0 },
             {0,0,1,0,0 },
+            {1,0,1,0,1 },
             {0,0,1,0,0 },
-            {0,0,1,0,0 },
-            {0,0,0,0,0 },
+            {0,0,0,0,3 },
 
         };
+        private Label[,] labels;
         public Form1()
         {
+            labels = new Label[size,size];
+            jugadores = new Jugador[2] { new Jugador() { Nombre = "1", Posicion = new Point(0, 0) }, new Jugador() { Nombre = "2", Posicion = new Point(4, 4) } };
             InitializeComponent();
-            Redibujar();
+            Dibujar();
             //this.ActiveControl = this;
         }
 
-        private void Redibujar()
+        private void Dibujar()
         {
             SuspendLayout();
             this.Controls.Clear();
@@ -39,10 +42,21 @@ namespace Matriz
             {
                 for (int i = 0; i < size; i++)
                 {
-                    this.Controls.Add(CrearLabel(i, j, M[j, i]));
+                    labels[i, j] = CrearLabel(i, j, M[j, i]);
+                    this.Controls.Add(labels[i, j]);
                 }
             }
             ResumeLayout();
+        }
+        private void Redibujar(Point[] points)
+        {
+            foreach (Point p in points)
+            {
+                this.Controls.Remove(labels[p.X, p.Y]);
+                labels[p.X, p.Y] = CrearLabel(p.X,p.Y, M[p.Y, p.X]);
+                this.Controls.Add(labels[p.X, p.Y]);
+            }
+
         }
         private Label CrearLabel(int j, int i, int value)
         {
@@ -61,6 +75,12 @@ namespace Matriz
                 case 2:
                     label.BackColor = Color.Green;
                     break;
+                case 3:
+                    label.BackColor = Color.Yellow;
+                    break;
+                case 4:
+                    label.BackColor = Color.Black;
+                    break;
                 default:
                     label.BackColor = Color.White;
                     break;
@@ -71,31 +91,92 @@ namespace Matriz
 
         private void Form1_KeyDown(object sender, KeyEventArgs e)
         {
-            Point final = new Point(0,0);
-            if (e.KeyCode==Keys.Down)
+            switch(e.KeyCode)
             {
-                final = new Point(actual.X, actual.Y + 1);
-            }
-            if (e.KeyCode == Keys.Up)
-            {
-                final = new Point(actual.X, actual.Y - 1);
-            }
-            if (e.KeyCode == Keys.Left)
-            {
-                final = new Point(actual.X-1, actual.Y);
-            }
-            if (e.KeyCode == Keys.Right)
-            {
-                final = new Point(actual.X+1, actual.Y);
-            }
+                case Keys.Up:
+                    Mover(jugadores[0], Direccion.Arriba);
+                    break;
+                case Keys.Down:
+                    Mover(jugadores[0], Direccion.Abajo);
+                    break;
+                case Keys.Left:
+                    Mover(jugadores[0], Direccion.Izquierda);
+                    break;
+                case Keys.Right:
+                    Mover(jugadores[0], Direccion.Derecha);
+                    break;
+                case Keys.Enter:
+                    Atacar(jugadores[0], jugadores[1]);
+                    break;
 
-            if (final.Y >= 0 && final.Y < size && final.X >= 0 && final.X < size && M[final.Y, final.X] == 0)
-            {
-                M[actual.Y, actual.X] = 0;
-                M[final.Y, final.X] = 2;
-                actual = final;
+                case Keys.W:
+                    Mover(jugadores[1], Direccion.Arriba);
+                    break;
+                case Keys.S:
+                    Mover(jugadores[1], Direccion.Abajo);
+                    break;
+                case Keys.D:
+                    Mover(jugadores[1], Direccion.Derecha);
+                    break;
+                case Keys.A:
+                    Mover(jugadores[1], Direccion.Izquierda);
+                    break;
+                case Keys.F:
+                    Atacar(jugadores[1], jugadores[0]);
+                    break;
             }
-            Redibujar();
         }
+        private void Mover(Jugador j, Direccion d)
+        {
+            if (M[j.Posicion.Y, j.Posicion.X] != 4)
+            {
+                Point final = new Point(j.Posicion.X, j.Posicion.Y);
+                switch (d)
+                {
+                    case Direccion.Arriba:
+                        final = new Point(j.Posicion.X, j.Posicion.Y - 1);
+                        break;
+                    case Direccion.Abajo:
+                        final = new Point(j.Posicion.X, j.Posicion.Y + 1);
+                        break;
+                    case Direccion.Derecha:
+                        final = new Point(j.Posicion.X + 1, j.Posicion.Y);
+                        break;
+                    case Direccion.Izquierda:
+                        final = new Point(j.Posicion.X - 1, j.Posicion.Y);
+                        break;
+                }
+                if (final.Y >= 0 && final.Y < size && final.X >= 0 && final.X < size && M[final.Y, final.X] == 0)
+                {
+                    var aux = M[j.Posicion.Y, j.Posicion.X];
+                    M[j.Posicion.Y, j.Posicion.X] = 0;
+                    M[final.Y, final.X] = aux;
+                    Redibujar(new Point[] { j.Posicion, final });
+                    j.Posicion = final;
+                }
+            }
+        }
+        private void Atacar (Jugador Victimario, Jugador Victima)
+        {
+            if (Victimario.Distancia(Victima.Posicion) < 2)
+            {
+                M[Victima.Posicion.Y, Victima.Posicion.X] = 4;
+                Redibujar(new Point[] { Victima.Posicion });
+            }
+        }
+    }
+    public class Jugador
+    {
+        public string Nombre { get; set; }
+        public Point Posicion { get; set; }
+
+        public double Distancia(Point p)
+        {
+            return Math.Sqrt(Math.Pow(p.X - this.Posicion.X, 2) + Math.Pow(p.Y - this.Posicion.Y, 2));
+        }
+    }
+    public enum Direccion
+    {
+        Arriba, Abajo, Derecha, Izquierda
     }
 }
